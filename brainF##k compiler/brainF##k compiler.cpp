@@ -44,6 +44,7 @@ void move_code_pointer_left(std::string::iterator& code_pointer, std::string::it
     }
     code_pointer--;
 }
+
 void move_data_pointer_right(std::ofstream& ofs)
 {
     ofs << "\n{\n"
@@ -155,7 +156,7 @@ int translate(std::string name, std::string& code, std::string input = "")
             break;
         case '[':
         {
-            ofs << "if(*data_pointer == 0)";
+            ofs << "if(*data_pointer != 0)";
             ofs << "{\n";                           // начало цикла
             number++;
             here.push(number);
@@ -167,7 +168,7 @@ int translate(std::string name, std::string& code, std::string input = "")
         }
         case ']':
             ofs << "}\n";                           // конец цикла
-            ofs << "if(*data_pointer != 0)";
+            ofs << "if(*data_pointer != 0)\n";
             ofs << "goto here" << here.top() << ";\n"; // прыгаем в начало цикла последнего необратанного цикла
             here.pop();
             ofs << "\nindex++; " << "// " << i << "\n\n";
@@ -175,12 +176,15 @@ int translate(std::string name, std::string& code, std::string input = "")
             move_code_pointer_right(code_pointer, code.end(), i);
             break;
         default:            // пропускаем все лишние символы
+            if(!isspace(*code_pointer))
+                throw exc("Invalid Expression", i);
             move_code_pointer_right(code_pointer, code.end(), i);
             i++;
             break;
         }
     }
-
+    if (!here.empty())
+        throw exc("Not found " + std::to_string(here.size()) + " ]", i);
     ofs << "delete[] mass;\n";
     ofs << "//std::cout<<res;\n";
     ofs << "return 0;\n"; // заверешение программы
