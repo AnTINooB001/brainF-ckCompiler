@@ -12,8 +12,6 @@ public:
     void get_wrong() { std::cerr << wrong << " " << index << "\n"; }
 };
 
-
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                                                                                                                                 // проверки выхода за предел
 void move_input_iterator_right(std::ofstream& ofs)
@@ -207,9 +205,6 @@ int main()
     {
         std::cout << "some wrong\n";
     }
-
-
-
 
     return 0;
 
