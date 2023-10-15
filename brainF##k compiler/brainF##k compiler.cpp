@@ -182,10 +182,11 @@ int translate(std::string name, std::string& code, std::string input = "")
     }
 
     ofs << "delete[] mass;\n";
+    ofs << "//std::cout<<res;\n";
     ofs << "return 0;\n"; // заверешение программы
     ofs << "}";
     ofs.close();
-    return 0;
+    return 1;
 }
 
 int main()
