@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <string>
 #include <stack>
+#include <fstream>
 
 class exc
 {
@@ -11,167 +12,192 @@ public:
     void get_wrong() { std::cerr << wrong << " " << index << "\n"; }
 };
 
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                                                                                                                                // проверки выхода за пределы
-void move_input_iterator_right(std::string::iterator& input_iterator, std::string::iterator end_input_iterator, int index)
+                                                                                                                                // проверки выхода за предел
+void move_input_iterator_right(std::ofstream& ofs)
 {
-    if (input_iterator >= end_input_iterator)
-    {
-        std::cout << "\n";
-        throw exc("OUT OF RANGE INPUT ITERATOR number element of code - ", index);
-    }
-    input_iterator++;
+    ofs << "{\n"
+        << "if (input_iterator >= input.end())\n"
+        << "{\n"
+        << "throw exc(\"OUT OF RANGE INPUT ITERATOR number element of code - \", index);\n"
+        << "}\n"
+        << "input_iterator++;\n"
+        << "}\n";
 }
 
-void move_code_pointer_right(std::string::iterator& code_pointer, std::string::iterator end_code_pointer, int index)
+void move_code_pointer_right(std::string::iterator& code_pointer, std::string::iterator end_code_pointer, int i)
 {
+
     if (code_pointer >= end_code_pointer)
     {
-        std::cout << "OUT OF RANGE CODE POINTER > \n";
-        throw exc("code p wrong! number element of code - ", index);
+        throw exc("code p wrong! number element of code - ", i);
     }
     code_pointer++;
 }
-void move_code_pointer_left(std::string::iterator& code_pointer, std::string::iterator begin_code_pointer, int index)
+
+void move_code_pointer_left(std::string::iterator& code_pointer, std::string::iterator begin_code_pointer, int i)
 {
+
     if (code_pointer <= begin_code_pointer)
     {
-        std::cout << "OUT OF RANGE CODE POINTER  < \n";
-        throw exc("code p wrong! number element of code - ", index);
+        throw exc("code p wrong! number element of code - ", i);
     }
     code_pointer--;
 }
-void move_data_pointer_right(unsigned char*& data_pointer, unsigned char* end_data_pointer, int index)
+void move_data_pointer_right(std::ofstream& ofs)
 {
-    if (data_pointer >= end_data_pointer)
-    {
-        std::cout << "OUT OF RANGE DATA POINTER > \n";
-        throw exc("data p wrong! number element of code - ", index);
-    }
-    data_pointer++;
+    ofs << "\n{\n"
+        << "if (data_pointer >= &mass[SIZE])\n"
+        << "{\n"
+        << "throw exc(\"data p wrong! number element of code - \", index);\n"
+        << "}\n"
+        << "data_pointer++;\n"
+        << "}\n\n";
 }
 
-void move_data_pointer_left(unsigned char*& data_pointer, unsigned char* begin_data_pointer, int index)
+void move_data_pointer_left(std::ofstream& ofs)
 {
-    if (data_pointer <= begin_data_pointer)             // проверка выхода за пределы
-    {
-        //std::cout << "OUT OF RANGE DATA POINTER < \n";
-        //throw exc("data p wrong! number element of code - ",index);
-    }
-    else
-        data_pointer--;
+    ofs << "\n{\n"
+        << "if (data_pointer <= &mass[0])\n"             // проверка выхода за пределы
+        << "{\n"
+        << "throw exc(\"data p wrong! number element of code - \",index);\n"
+        << "}\n"
+        << "else\n"
+        << "data_pointer--;\n"
+        << "}\n\n";
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string translate(std::string& code, std::string input = "")
+int translate(std::string name, std::string& code, std::string input = "")
 {
+    std::ofstream ofs(name); // файл для вывода 
+    /////////////////////////////////////////////////////////////////////////////
+    ofs << "#include <iostream>\n"
+        << "#include <string>\n"
+        << "#include <stack>\n\n";
+
+    ofs << "class exc\n"
+        << "{\n"
+        << "public:\n"
+        << "exc(std::string wr, int i) : wrong{ wr }, index{ i } {}\n"
+        << "std::string wrong;\n"                                                                               // создание программы и переменных
+        << "int index;\n"
+        << "void get_wrong() { std::cerr << wrong << \" \" << index << \"\"; }\n"
+        << "};\n";
+
+    ofs << "int main()\n{\n";
+    ofs << "std::string code = \"" << code << "\";\n";
+    ofs << "std::string input = \"" << input << "\";\n";
+    ofs << "auto input_iterator = input.begin();\n";
+    ofs << "const int SIZE = 30000;\n";
+    ofs << "unsigned char* const mass = new unsigned char[SIZE] {};\n";
+    ofs << "unsigned char* data_pointer = &mass[SIZE/2];\n";
+    ofs << "std::string res = \"\";\n";
+    ofs << "std::stack<int> stack;\n";
+    ofs << "int index = 1;\n";
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    std::stack<int> here;  // стек начала цикла, нужен для правильной обработки вложенных циклов
+    int i = 2;
+    int number = 0;      // номер начала цикла
     auto code_pointer = code.begin();
-    auto input_iterator = input.begin();
-    const int SIZE = 1000;
-    unsigned char* const mass = new unsigned char[SIZE] {};
-    unsigned char* data_pointer = &mass[5];
-    std::string res = "";
-    std::stack<int> stack;
-    int index = 1;
+
     while (code_pointer != code.end())
     {
         switch (*code_pointer) // проверка символа кода
         {
         case '+':                       // увеличиваем значение указателя на элемент массива mass на 1
-            *data_pointer += 1;
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+            ofs << "*data_pointer += 1;\n";
+            move_code_pointer_right(code_pointer, code.end(), i);
+            ofs << "//----------------------------------------------------\n";
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
             break;
         case '-':                       // уменьшаем значение указателя на элемент массива mass на 1
-            *data_pointer -= 1;
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+            ofs << "*data_pointer -= 1;\n";
+            move_code_pointer_right(code_pointer, code.end(), i);
+            ofs << "//----------------------------------------------------\n";
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
             break;
         case '>':                       // перемещаем указатель на элемент враво на 1 массива mass
-            move_data_pointer_right(data_pointer, &mass[SIZE], index);
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+            move_data_pointer_right(ofs);
+            move_code_pointer_right(code_pointer, code.end(), i);
+            ofs << "//----------------------------------------------------\n";
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
             break;
         case '<':                     // перемещаем указатель на элемент влево на 1 массива mass
-            move_data_pointer_left(data_pointer, &mass[0], index);
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+            move_data_pointer_left(ofs);
+            move_code_pointer_right(code_pointer, code.end(), i);
+            ofs << "//----------------------------------------------------\n";
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
             break;
         case ',':                      // записываем значение элемента с строки input в значение указателя на элемент массива mass 
-            if (input_iterator == input.end())
-                throw exc("empty input! number of code element - ", index);
-            *data_pointer = *input_iterator;
-            move_code_pointer_right(code_pointer, code.end(), index);
-            move_input_iterator_right(input_iterator, input.end(), index);
-            index++;
+            ofs << "if (input_iterator == input.end())"
+                << "throw exc(\"empty input! number of code element - \");\n";
+            ofs << "*data_pointer = *input_iterator;\n";
+            move_code_pointer_right(code_pointer, code.end(), i);
+            move_input_iterator_right(ofs);
+            ofs << "//----------------------------------------------------\n";
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
             break;
         case '.':                   //выводим значение указателя на элемент в res
-            res.push_back(*data_pointer);
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+            ofs << "res.push_back(*data_pointer);\n";
+            move_code_pointer_right(code_pointer, code.end(), i);
+            ofs << "//----------------------------------------------------\n";
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
             break;
-        case '[':                           // начало цикла 
-            if (*data_pointer == 0)
-            {
-                while (*code_pointer != ']') // пропускаем цикл []
-                {
-                    move_code_pointer_right(code_pointer, code.end(), index);
-                    index++;
-                }
-                move_code_pointer_right(code_pointer, code.end(), index);
-                index++;
-                break;                      // выходим из кейса '['
-            }
-            // если попали сюда значит сработал цикл []
-            if (stack.empty() || stack.top() != index)
-                stack.push(index);
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+        case '[':
+        {
+            ofs << "if(*data_pointer == 0)";
+            ofs << "{\n";                           // начало цикла
+            number++;
+            here.push(number);
+            ofs << "\nhere" << std::to_string(number) << ":\n";
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
+            move_code_pointer_right(code_pointer, code.end(), i);
             break;
+        }
         case ']':
-            if (*data_pointer != 0)
-            {
-
-                while (*code_pointer != '[') // возвращаемся в начало цикла
-                {
-                here:
-                    move_code_pointer_left(code_pointer, code.begin(), index);
-                    index--;
-                }
-                if (stack.top() != index)
-                    goto here;              // для того чтобы пропускать уже обработанный цикл [] в цикле []
-                move_code_pointer_right(code_pointer, code.end(), index);
-                index++;
-                break;                      // выходим из кейса ']'
-            }
-            // если попали сюда значит цикл [] закончен
-            if (!stack.empty())
-                stack.pop();
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+            ofs << "}\n";                           // конец цикла
+            ofs << "if(*data_pointer != 0)";
+            ofs << "goto here" << here.top() << ";\n"; // прыгаем в начало цикла последнего необратанного цикла
+            here.pop();
+            ofs << "\nindex++; " << "// " << i << "\n\n";
+            i++;
+            move_code_pointer_right(code_pointer, code.end(), i);
             break;
-
         default:            // пропускаем все лишние символы
-            move_code_pointer_right(code_pointer, code.end(), index);
-            index++;
+            move_code_pointer_right(code_pointer, code.end(), i);
+            i++;
             break;
         }
     }
 
-    delete[] mass;
-    data_pointer = nullptr;
-    return res;
+    ofs << "delete[] mass;\n";
+    ofs << "return 0;\n"; // заверешение программы
+    ofs << "}";
+    ofs.close();
+    return 0;
 }
 
 int main()
 {
-    ///std::string code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."; // выводит Helo world!
-
-    std::string code = "+[-->-[>>+>-----<<]<--<---]>-.>>>+.>>..+++[.>]<<<<.+++.------.<<-.>>>>+.,"; // выводит Helo world! краткая версия
+    std::string code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."; // выводит Helo world!
+    std::string file_name = "check.cpp";
+    //std::string code = "+[-->-[>>+>-----<<]<--<---]>-.>>>+.>>..+++[.>]<<<<.+++.------.<<-.>>>>+."; // выводит Helo world! краткая версия
     try
     {
-        std::cout << translate(code);
+        std::cout << translate(file_name, code);
     }
     catch (exc& e)
     {
